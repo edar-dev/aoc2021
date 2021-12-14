@@ -6,8 +6,9 @@ fn main() -> io::Result<()> {
     let file = File::open("src/input").expect("file not found");
     let reader = BufReader::new(file);
 
-    let mut v_pos = 0;
+    let mut depth = 0;
     let mut h_pos = 0;
+    let mut aim = 0;
 
     for line in reader.lines() {
 
@@ -24,14 +25,14 @@ fn main() -> io::Result<()> {
 
         // move
         match direction {
-            "forward" => h_pos += distance,
-            "up" => v_pos -= distance,
-            "down" => v_pos += distance,
+            "forward" => {h_pos += distance; depth += aim*distance;},
+            "up" => aim -= distance,
+            "down" => aim += distance,
             _ => panic!("invalid direction"),
         }
 
     }
 
-    println!("{}", v_pos * h_pos);
+    println!("{}", h_pos * depth);
     Ok(())
 }
