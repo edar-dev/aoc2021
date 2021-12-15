@@ -3,52 +3,88 @@ use std::io::{self, prelude::*, BufReader};
 
 fn main() -> io::Result<()> {
     // read input from file
-    let file = File::open("src/input").expect("file not found");
+    let file_content = read_file_content("src/input");
+
+    let oxygen_generator_rating = find_value(&file_content, 0, true);
+
+    let co2_scrubber_rating = find_value(&file_content, 0,false);
+
+    println!(
+        "{} x {} = {}",
+        oxygen_generator_rating,
+        co2_scrubber_rating,
+        oxygen_generator_rating * co2_scrubber_rating
+    );
+
+    Ok(())
+}
+
+fn find_value(input_list: &Vec<Vec<u32>>, pos: usize, get_bigger: bool) -> u32 {
+    if input_list.len() == 1 {
+        from_binary_string_to_decimal(&input_list[0].clone())
+    } else {
+        let most_common_char: u32 = get_next_bit_value(input_list, pos, get_bigger);
+        let new_input_list: Vec<Vec<u32>> = input_list
+            .into_iter()
+            .filter(|&input| input[pos] == most_common_char)
+            .cloned()
+            .collect();
+            find_value(&new_input_list, pos + 1, get_bigger)
+    }
+}
+
+fn get_next_bit_value(input_list: &Vec<Vec<u32>>, pos: usize, get_bigger: bool) -> u32 {
+    let mut char_counts: Vec<u32> = vec![0; 2];
+    for input in input_list {
+        char_counts[input[pos] as usize] += 1;
+    }
+    if get_bigger {
+        if char_counts[0] > char_counts[1] {
+            0
+        } else {
+            1
+        }
+    } else {
+        if char_counts[0] <= char_counts[1] {
+            0
+        } else {
+            1
+        }
+    }
+}
+
+fn read_file_content(file_path: &str) -> Vec<Vec<u32>> {
+    let file = File::open(file_path).expect("file not found");
     let reader = BufReader::new(file);
 
-    let mut input_rows = 0;
-
-    // create an array of 12 integers
-    let mut input_values: [i32; 12] = [0; 12];
+    let mut input_rows: Vec<Vec<u32>> = Vec::new();
 
     for line in reader.lines() {
         // read line as string
         let line = line.unwrap();
         // iterate over each character in the line
-        for (i, c) in line.chars().enumerate() {
-            // convert character to integer
-            if c == '1' {
-                input_values[i] += 1;
-            }
+        let mut input_row: Vec<u32> = Vec::new();
+        for character in line.chars() {
+            input_row.push(character.to_digit(10).unwrap());
         }
-
-        input_rows += 1;
+        input_rows.push(input_row);
     }
 
-    input_values.reverse();
+    input_rows
+}
 
-    let mut gamma_rate = 0;
-    let mut epsilon_rate = 0;
+fn from_binary_string_to_decimal(input: &Vec<u32>) -> u32 {
+    let mut result = 0;
+    let mut multiplier = 1;
 
-    let half_value = input_rows / 2;
-
-    let mut index = 0;
-    for value in input_values {
-        let magic_number = i32::pow(2, index);
-
-        if value > half_value {
-            gamma_rate += magic_number;
-        } else {
-            epsilon_rate += magic_number;
-        }
-
-        println!("{}", magic_number);
-        index += 1;
+    let mut inverted_binary = input.clone();
+    inverted_binary.reverse();
+    for c in inverted_binary {
+        print!("{:?}", c);
+        result += multiplier * c;
+        multiplier *= 2;
     }
+    println!("");
 
-    println!("{}", gamma_rate);
-    println!("{}", epsilon_rate);
-    println!("{}", gamma_rate * epsilon_rate);
-
-    Ok(())
+    result
 }
